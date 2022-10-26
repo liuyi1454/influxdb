@@ -20,6 +20,7 @@ import (
 	"github.com/influxdata/influxdb/services/meta"
 	"github.com/influxdata/influxdb/tsdb"
 	"github.com/influxdata/influxql"
+	"golang.org/x/exp/maps"
 )
 
 // ErrDatabaseNameRequired is returned when executing statements that require a database,
@@ -197,6 +198,8 @@ func (e *StatementExecutor) ExecuteStatement(ctx *query.ExecutionContext, stmt i
 		return e.executeShowTagKeys(ctx, stmt)
 	case *influxql.ShowTagValuesStatement:
 		return e.executeShowTagValues(ctx, stmt)
+	case *influxql.ShowFieldKeyCardinalityStatement:
+		rows, err = e.executeShowFieldKeyCardinalityStatement(ctx, stmt)
 	case *influxql.ShowUsersStatement:
 		rows, err = e.executeShowUsersStatement(stmt)
 	case *influxql.SetPasswordUserStatement:
@@ -675,6 +678,29 @@ func (e *StatementExecutor) executeShowDatabasesStatement(ctx *query.ExecutionCo
 		}
 	}
 	return []*models.Row{row}, nil
+}
+
+func (e *StatementExecutor) executeShowFieldKeyCardinalityStatement(ctx *query.ExecutionContext, stmt *influxql.ShowFieldKeyCardinalityStatement) (models.Rows, error) {
+	measurementsFieldKeys, err := e.TSDBStore.MeasurementsFieldKeys(ctx.ExecutionOptions.CoarseAuthorizer, stmt.Sources)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed computing field key cardinality for %q: %w", stmt.String(), err)
+	}
+
+	measurements := maps.Keys(measurementsFieldKeys)
+	sort.Strings(measurements)
+	rows := make([]*models.Row, 0, len(measurementsFieldKeys))
+
+	for _, m := range measurements {
+		row := &models.Row{
+			Name:    m,
+			Columns: []string{"count"},
+			Values:  [][]interface{}{{len(measurementsFieldKeys[m])}},
+			Partial: false,
+		}
+		rows = append(rows, row)
+	}
+	return rows, err
 }
 
 func (e *StatementExecutor) executeShowDiagnosticsStatement(stmt *influxql.ShowDiagnosticsStatement) (models.Rows, error) {
@@ -1397,6 +1423,10 @@ func (e *StatementExecutor) NormalizeStatement(stmt influxql.Statement, defaultD
 			if node.Database == "" {
 				node.Database = defaultDatabase
 			}
+		case *influxql.ShowFieldKeyCardinalityStatement:
+			if node.Database == "" {
+				node.Database = defaultDatabase
+			}
 		case *influxql.Measurement:
 			switch stmt.(type) {
 			case *influxql.DropSeriesStatement, *influxql.DeleteSeriesStatement:
@@ -1472,9 +1502,11 @@ type TSDBStore interface {
 	MeasurementNames(ctx context.Context, auth query.FineAuthorizer, database string, retentionPolicy string, cond influxql.Expr) ([][]byte, error)
 	TagKeys(ctx context.Context, auth query.FineAuthorizer, shardIDs []uint64, cond influxql.Expr) ([]tsdb.TagKeys, error)
 	TagValues(ctx context.Context, auth query.FineAuthorizer, shardIDs []uint64, cond influxql.Expr) ([]tsdb.TagValues, error)
+	MeasurementsFieldKeys(auth query.CoarseAuthorizer, sources influxql.Sources) (map[string][]string, error)
 
 	SeriesCardinality(ctx context.Context, database string) (int64, error)
 	MeasurementsCardinality(ctx context.Context, database string) (int64, error)
+	ExpandSources(sources influxql.Sources) (influxql.Sources, error)
 }
 
 var _ TSDBStore = LocalTSDBStore{}

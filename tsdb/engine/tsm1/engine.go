@@ -593,6 +593,15 @@ func (e *Engine) MeasurementFields(measurement []byte) *tsdb.MeasurementFields {
 	return e.fieldset.CreateFieldsIfNotExists(measurement)
 }
 
+func (e *Engine) MeasurementFieldNames(measurement string) []string {
+	mf := e.fieldset.FieldsByString(measurement)
+	if mf == nil {
+		return nil
+	} else {
+		return mf.FieldKeys()
+	}
+}
+
 func (e *Engine) HasTagKey(name, key []byte) (bool, error) {
 	return e.index.HasTagKey(name, key)
 }

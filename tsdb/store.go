@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -1625,6 +1626,64 @@ func (s *Store) WriteToShard(writeCtx WriteContext, shardID uint64, points []mod
 	}
 
 	return sh.WritePoints(points, s.statsTracker(sh.database, sh.retentionPolicy, writeCtx.UserId))
+}
+
+func (s *Store) MeasurementsFieldKeys(auth query.CoarseAuthorizer, sources influxql.Sources) (map[string][]string, error) {
+	sources, err := s.ExpandSources(sources)
+	if err != nil {
+		return nil, fmt.Errorf("cannot resolve field key cardinality sources - %s: %w", formatSources(sources), err)
+	}
+	authSources := make([]*influxql.Measurement, 0, len(sources))
+	for _, s := range sources {
+		if m, ok := s.(*influxql.Measurement); ok && auth.AuthorizeDatabase(influxql.ReadPrivilege, m.Database) || auth.AuthorizeDatabase(influxql.WritePrivilege, m.Database) {
+			authSources = append(authSources, m)
+		}
+	}
+	shards := func() Shards {
+		s.mu.RLock()
+		defer s.mu.RUnlock()
+		return s.shardsSlice()
+	}()
+
+	all := make(map[string]map[string]struct{}, len(authSources))
+	for _, m := range authSources {
+		for _, shard := range shards {
+			names, err := shard.MeasurementFieldNames(m.Name)
+			if err != nil {
+				return nil, fmt.Errorf("unable to get field keys for %s: %w", m.Name, err)
+			}
+			measurementMap, ok := all[m.Name]
+			if !ok {
+				measurementMap = make(map[string]struct{}, len(names))
+				all[m.Name] = measurementMap
+			}
+			for _, name := range names {
+				measurementMap[name] = struct{}{}
+			}
+		}
+	}
+	return mapOfSetsToMapOfSlices(all), nil
+}
+
+func mapOfSetsToMapOfSlices[K comparable, KV comparable, V any](m map[K]map[KV]V) map[K][]KV {
+	retMap := make(map[K][]KV, len(m))
+
+	for k, vm := range m {
+		slice := make([]KV, 0, len(vm))
+		for kv, _ := range vm {
+			slice = append(slice, kv)
+		}
+		retMap[k] = slice
+	}
+	return retMap
+}
+
+func formatSources(sources influxql.Sources) string {
+	errSources := make([]string, 0, len(sources))
+	for _, errSrc := range sources {
+		errSources = append(errSources, errSrc.String())
+	}
+	return strings.Join(errSources, ", ")
 }
 
 // MeasurementNames returns a slice of all measurements. Measurements accepts an

@@ -67,6 +67,12 @@ func rewriteShowFieldKeyCardinalityStatement(stmt *influxql.ShowFieldKeyCardinal
 		}
 	}
 
+	sources := rewriteSources2(stmt.Sources, stmt.Database)
+	if stmt.Condition == nil {
+		stmt.Sources = sources
+		return stmt, nil
+	}
+
 	return &influxql.SelectStatement{
 		Fields: []*influxql.Field{
 			{
@@ -82,7 +88,7 @@ func rewriteShowFieldKeyCardinalityStatement(stmt *influxql.ShowFieldKeyCardinal
 				Alias: "count",
 			},
 		},
-		Sources:    rewriteSources2(stmt.Sources, stmt.Database),
+		Sources:    sources,
 		Condition:  stmt.Condition,
 		Dimensions: stmt.Dimensions,
 		Offset:     stmt.Offset,

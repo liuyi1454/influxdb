@@ -776,6 +776,14 @@ func (s *Shard) createFieldsAndMeasurements(fieldsToCreate []*FieldCreate) error
 	return engine.MeasurementFieldSet().Save(changes)
 }
 
+func (s *Shard) MeasurementFieldNames(name string) ([]string, error) {
+	eng, err := s.Engine()
+	if err != nil {
+		return nil, err
+	}
+	return eng.MeasurementFieldNames(name), nil
+}
+
 // DeleteSeriesRange deletes all values from for seriesKeys between min and max (inclusive)
 func (s *Shard) DeleteSeriesRange(itr SeriesIterator, min, max int64) error {
 	engine, err := s.Engine()
