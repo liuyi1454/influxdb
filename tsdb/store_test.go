@@ -1054,6 +1054,74 @@ func TestStore_Cardinality_Unique(t *testing.T) {
 	}
 }
 
+func TestStore_FieldCardinality(t *testing.T) {
+	test := func(index string) {
+		store := NewStore(index)
+		store.EngineOptions.Config.MaxSeriesPerDatabase = 0
+		var err error
+		if err = store.Open(); err != nil {
+			panic(err)
+		}
+		testStoreFieldCardinality(t, store)
+		if err = store.Close(); err != nil {
+			panic(err)
+		}
+	}
+
+	for _, index := range tsdb.RegisteredIndexes() {
+		t.Run(index, func(t *testing.T) { test(index) })
+	}
+}
+
+var matchAllRegex = regexp.MustCompile(`.+`)
+var matchAllSources = influxql.Sources{
+	&influxql.Measurement{Regex: &influxql.RegexLiteral{Val: matchAllRegex}},
+}
+
+func testStoreFieldCardinality(t *testing.T, store *Store) {
+	const shardCount = 10
+	// Generate point data to write to the shards.
+	series := genTestSeries(10, 2, 3)
+	if (len(series) % shardCount) != 0 {
+		t.Errorf("number of series generated (%d) not evenly divisble by shard count (%d)", len(series), shardCount)
+	}
+	expFieldCardinality := map[string]int{}
+
+	points := make([]models.Point, 0, len(series))
+	for i, s := range series {
+		fields := make(map[string]interface{})
+		var j int
+		for j = 0; j <= (i % 255); j++ {
+			field := fmt.Sprintf("values%d_%d", i, j)
+			fields[field] = float64(j)
+		}
+		newPoint := models.MustNewPoint(s.Measurement, s.Tags, fields, time.Now())
+		points = append(points, newPoint)
+		expFieldCardinality[s.Measurement] += j
+	}
+
+	// Create requested number of shards in the store & write points across
+	// shards such that we never write the same series to multiple shards.
+	for shardID := 0; shardID < shardCount; shardID++ {
+		if err := store.CreateShard("db", "rp", uint64(shardID), true); err != nil {
+			t.Errorf("create shard: %s", err)
+		}
+		if err := store.BatchWrite(shardID, points[shardID*(len(series)/shardCount):(shardID+1)*(len(series)/shardCount)]); err != nil {
+			t.Errorf("batch write: %s", err)
+		}
+	}
+
+	fieldKeys, err := store.Store.MeasurementsFieldKeys(query.OpenCoarseAuthorizer, matchAllSources)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for m, k := range fieldKeys {
+		if len(k) != expFieldCardinality[m] {
+			t.Errorf("got field key cardinality %d expected %d", len(k), expFieldCardinality[m])
+		}
+	}
+}
+
 // This test tests cardinality estimation when series data is duplicated across
 // multiple shards.
 func testStoreCardinalityDuplicates(t *testing.T, store *Store) {
