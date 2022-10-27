@@ -1111,9 +1111,9 @@ func testStoreFieldCardinality(t *testing.T, store *Store) {
 		}
 	}
 
-	fieldKeys, err := store.Store.MeasurementsFieldKeys(query.OpenCoarseAuthorizer, matchAllSources)
+	fieldKeys, err := store.Store.FieldKeys(context.Background(), query.OpenCoarseAuthorizer, matchAllSources)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 	for m, k := range fieldKeys {
 		if len(k) != expFieldCardinality[m] {

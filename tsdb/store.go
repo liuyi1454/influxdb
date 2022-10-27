@@ -1108,6 +1108,19 @@ func byDatabase(name string) func(sh *Shard) bool {
 	}
 }
 
+// byDatabase provides a predicate for filterShards that matches on the name of
+// the database passed in.
+func byMeasurements(measurements influxql.Measurements) func(sh *Shard) bool {
+	return func(sh *Shard) bool {
+		for _, measurement := range measurements {
+			if (sh.database == measurement.Database) && (sh.RetentionPolicy() == measurement.RetentionPolicy) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
 // walkShards apply a function to each shard in parallel. fn must be safe for
 // concurrent use. If any of the functions return an error, the first error is
 // returned.
@@ -1628,26 +1641,29 @@ func (s *Store) WriteToShard(writeCtx WriteContext, shardID uint64, points []mod
 	return sh.WritePoints(points, s.statsTracker(sh.database, sh.retentionPolicy, writeCtx.UserId))
 }
 
-func (s *Store) MeasurementsFieldKeys(auth query.CoarseAuthorizer, sources influxql.Sources) (map[string][]string, error) {
-	sources, err := s.ExpandSources(sources)
-	if err != nil {
-		return nil, fmt.Errorf("cannot resolve field key cardinality sources - %s: %w", formatSources(sources), err)
-	}
-	authSources := make([]*influxql.Measurement, 0, len(sources))
+func (s *Store) FieldKeys(ctx context.Context, auth query.CoarseAuthorizer, sources influxql.Sources) (map[string][]string, error) {
+	authMeasurements := make([]*influxql.Measurement, 0, len(sources))
 	for _, s := range sources {
-		if m, ok := s.(*influxql.Measurement); ok && auth.AuthorizeDatabase(influxql.ReadPrivilege, m.Database) || auth.AuthorizeDatabase(influxql.WritePrivilege, m.Database) {
-			authSources = append(authSources, m)
+		m, ok := s.(*influxql.Measurement)
+		if ok && auth.AuthorizeDatabase(influxql.ReadPrivilege, m.Database) || auth.AuthorizeDatabase(influxql.WritePrivilege, m.Database) {
+			authMeasurements = append(authMeasurements, m)
 		}
 	}
-	shards := func() Shards {
-		s.mu.RLock()
-		defer s.mu.RUnlock()
-		return s.shardsSlice()
-	}()
-
-	all := make(map[string]map[string]struct{}, len(authSources))
-	for _, m := range authSources {
+	shards := Shards(s.filterShards(byMeasurements(authMeasurements)))
+	authSources := measurementsToSources(authMeasurements)
+	expandedSources, err := shards.ExpandSources(authSources)
+	if err != nil {
+		return nil, fmt.Errorf("failed to expand sources for %q: %w", formatSources(authSources), err)
+	}
+	all := make(map[string]map[string]struct{}, len(expandedSources))
+	for _, m := range sourcesToMeasurements(expandedSources) {
 		for _, shard := range shards {
+			// Check for timeouts
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			default:
+			}
 			names, err := shard.MeasurementFieldNames(m.Name)
 			if err != nil {
 				return nil, fmt.Errorf("unable to get field keys for %s: %w", m.Name, err)
@@ -1684,6 +1700,24 @@ func formatSources(sources influxql.Sources) string {
 		errSources = append(errSources, errSrc.String())
 	}
 	return strings.Join(errSources, ", ")
+}
+
+func sourcesToMeasurements(sources influxql.Sources) influxql.Measurements {
+	measurements := make([]*influxql.Measurement, 0, len(sources))
+	for _, s := range sources {
+		if m, ok := s.(*influxql.Measurement); ok {
+			measurements = append(measurements, m)
+		}
+	}
+	return measurements
+}
+
+func measurementsToSources(measurements influxql.Measurements) influxql.Sources {
+	sources := make([]influxql.Source, 0, len(measurements))
+	for _, m := range measurements {
+		sources = append(sources, m)
+	}
+	return sources
 }
 
 // MeasurementNames returns a slice of all measurements. Measurements accepts an
