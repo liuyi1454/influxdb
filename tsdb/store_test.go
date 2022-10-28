@@ -1073,15 +1073,25 @@ func TestStore_FieldCardinality(t *testing.T) {
 	}
 }
 
-var matchAllRegex = regexp.MustCompile(`.+`)
-var matchAllSources = influxql.Sources{
-	&influxql.Measurement{Regex: &influxql.RegexLiteral{Val: matchAllRegex}},
+const database = "db"
+const retention = "rp"
+
+var matchers = []influxql.Sources{
+	// Everything
+	{&influxql.Measurement{Database: database, RetentionPolicy: retention, Regex: &influxql.RegexLiteral{Val: regexp.MustCompile(`.+`)}}},
+	// "measurement19" only
+	{&influxql.Measurement{Database: database, RetentionPolicy: retention, Regex: &influxql.RegexLiteral{Val: regexp.MustCompile(`.+t19`)}}},
+	// literal
+	{&influxql.Measurement{Database: database, RetentionPolicy: retention, Name: "measurement6"}},
+	// two sources, literal and regular expression
+	{&influxql.Measurement{Database: database, RetentionPolicy: retention, Regex: &influxql.RegexLiteral{Val: regexp.MustCompile(`.+t19`)}},
+		&influxql.Measurement{Database: database, RetentionPolicy: retention, Name: "measurement6"}},
 }
 
 func testStoreFieldCardinality(t *testing.T, store *Store) {
 	const shardCount = 10
 	// Generate point data to write to the shards.
-	series := genTestSeries(10, 2, 3)
+	series := genTestSeries(20, 2, 3)
 	if (len(series) % shardCount) != 0 {
 		t.Errorf("number of series generated (%d) not evenly divisble by shard count (%d)", len(series), shardCount)
 	}
@@ -1103,7 +1113,7 @@ func testStoreFieldCardinality(t *testing.T, store *Store) {
 	// Create requested number of shards in the store & write points across
 	// shards such that we never write the same series to multiple shards.
 	for shardID := 0; shardID < shardCount; shardID++ {
-		if err := store.CreateShard("db", "rp", uint64(shardID), true); err != nil {
+		if err := store.CreateShard(database, retention, uint64(shardID), true); err != nil {
 			t.Errorf("create shard: %s", err)
 		}
 		if err := store.BatchWrite(shardID, points[shardID*(len(series)/shardCount):(shardID+1)*(len(series)/shardCount)]); err != nil {
@@ -1111,13 +1121,15 @@ func testStoreFieldCardinality(t *testing.T, store *Store) {
 		}
 	}
 
-	fieldKeys, err := store.Store.FieldKeys(context.Background(), query.OpenCoarseAuthorizer, matchAllSources)
-	if err != nil {
-		t.Error(err)
-	}
-	for m, k := range fieldKeys {
-		if len(k) != expFieldCardinality[m] {
-			t.Errorf("got field key cardinality %d expected %d", len(k), expFieldCardinality[m])
+	for _, s := range matchers {
+		fieldKeys, err := store.Store.FieldKeys(context.Background(), query.OpenCoarseAuthorizer, s)
+		if err != nil {
+			t.Error(err)
+		}
+		for m, k := range fieldKeys {
+			if len(k) != expFieldCardinality[m] {
+				t.Errorf("got field key cardinality %d expected %d", len(k), expFieldCardinality[m])
+			}
 		}
 	}
 }

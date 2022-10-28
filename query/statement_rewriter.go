@@ -60,15 +60,8 @@ func rewriteShowFieldKeyCardinalityStatement(stmt *influxql.ShowFieldKeyCardinal
 		return nil, errors.New("SHOW FIELD KEY CARDINALITY doesn't support time in WHERE clause")
 	}
 
-	// Use all field keys, if zero.
-	if len(stmt.Sources) == 0 {
-		stmt.Sources = influxql.Sources{
-			&influxql.Measurement{Regex: &influxql.RegexLiteral{Val: matchAllRegex}},
-		}
-	}
-
 	sources := rewriteSources2(stmt.Sources, stmt.Database)
-	if stmt.Condition == nil {
+	if (stmt.Condition == nil) && (stmt.Limit == 0) && (stmt.Offset == 0) && (stmt.Dimensions == nil) {
 		stmt.Sources = sources
 		return stmt, nil
 	}
