@@ -1429,7 +1429,7 @@ func (s *Store) ShardRelativePath(id uint64) (string, error) {
 // the passed in series keys.
 func (s *Store) DeleteSeries(database string, sources []influxql.Source, condition influxql.Expr) error {
 	// Expand regex expressions in the FROM clause.
-	a, err := s.ExpandSources(sources)
+	a, err := s.expandSources(sources)
 	if err != nil {
 		return err
 	} else if len(sources) > 0 && len(a) == 0 {
@@ -1526,8 +1526,8 @@ func (s *Store) DeleteSeries(database string, sources []influxql.Source, conditi
 	})
 }
 
-// ExpandSources expands sources against all local shards.
-func (s *Store) ExpandSources(sources influxql.Sources) (influxql.Sources, error) {
+// expandSources expands sources against all local shards.
+func (s *Store) expandSources(sources influxql.Sources) (influxql.Sources, error) {
 	shards := func() Shards {
 		s.mu.RLock()
 		defer s.mu.RUnlock()

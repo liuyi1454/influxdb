@@ -1506,7 +1506,6 @@ type TSDBStore interface {
 
 	SeriesCardinality(ctx context.Context, database string) (int64, error)
 	MeasurementsCardinality(ctx context.Context, database string) (int64, error)
-	ExpandSources(sources influxql.Sources) (influxql.Sources, error)
 }
 
 var _ TSDBStore = LocalTSDBStore{}
