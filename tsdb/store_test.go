@@ -1122,7 +1122,8 @@ func testStoreFieldCardinality(t *testing.T, store *Store) {
 	}
 
 	for _, s := range matchers {
-		fieldKeys, err := store.Store.FieldKeys(context.Background(), query.OpenCoarseAuthorizer, s)
+		stmt := &influxql.ShowFieldKeyCardinalityStatement{Sources: s}
+		fieldKeys, err := store.Store.FieldKeys(context.Background(), query.OpenCoarseAuthorizer, stmt)
 		if err != nil {
 			t.Error(err)
 		}
