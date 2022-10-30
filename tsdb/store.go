@@ -1643,9 +1643,8 @@ func (s *Store) WriteToShard(writeCtx WriteContext, shardID uint64, points []mod
 
 func (s *Store) FieldKeys(ctx context.Context, auth query.CoarseAuthorizer, stmt *influxql.ShowFieldKeyCardinalityStatement) (map[string][]string, error) {
 	authSources := make([]influxql.Source, 0, len(stmt.Sources))
-	for _, s := range stmt.Sources {
-		m, ok := s.(*influxql.Measurement)
-		if ok && auth.AuthorizeDatabase(influxql.ReadPrivilege, m.Database) || auth.AuthorizeDatabase(influxql.WritePrivilege, m.Database) {
+	for _, m := range stmt.Sources.Measurements() {
+		if auth.AuthorizeDatabase(influxql.ReadPrivilege, m.Database) || auth.AuthorizeDatabase(influxql.WritePrivilege, m.Database) {
 			authSources = append(authSources, m)
 		}
 	}
@@ -1677,7 +1676,11 @@ func (s *Store) FieldKeys(ctx context.Context, auth query.CoarseAuthorizer, stmt
 			}
 		}
 	}
-	return mapOfSetsToMapOfSlices(all), nil
+	measurementFieldKeys := mapOfSetsToMapOfSlices(all)
+	for m, _ := range measurementFieldKeys {
+		sort.Strings(measurementFieldKeys[m])
+	}
+	return measurementFieldKeys, nil
 }
 
 func mapOfSetsToMapOfSlices[K comparable, KV comparable, V any](m map[K]map[KV]V) map[K][]KV {
