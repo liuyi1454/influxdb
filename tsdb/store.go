@@ -1641,10 +1641,10 @@ func (s *Store) WriteToShard(writeCtx WriteContext, shardID uint64, points []mod
 	return sh.WritePoints(points, s.statsTracker(sh.database, sh.retentionPolicy, writeCtx.UserId))
 }
 
-func (s *Store) FieldKeys(ctx context.Context, auth query.CoarseAuthorizer, stmt *influxql.ShowFieldKeyCardinalityStatement) (map[string][]string, error) {
+func (s *Store) FieldKeys(ctx context.Context, auth query.FineAuthorizer, stmt *influxql.ShowFieldKeyCardinalityStatement) (map[string][]string, error) {
 	authSources := make([]influxql.Source, 0, len(stmt.Sources))
 	for _, m := range stmt.Sources.Measurements() {
-		if auth.AuthorizeDatabase(influxql.ReadPrivilege, m.Database) || auth.AuthorizeDatabase(influxql.WritePrivilege, m.Database) {
+		if auth.AuthorizeSeriesRead(m.Database, nil, nil) {
 			authSources = append(authSources, m)
 		}
 	}

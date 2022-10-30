@@ -681,7 +681,7 @@ func (e *StatementExecutor) executeShowDatabasesStatement(ctx *query.ExecutionCo
 }
 
 func (e *StatementExecutor) executeShowFieldKeyCardinalityStatement(ctx *query.ExecutionContext, stmt *influxql.ShowFieldKeyCardinalityStatement) (models.Rows, error) {
-	measurementsFieldKeys, err := e.TSDBStore.FieldKeys(ctx, ctx.ExecutionOptions.CoarseAuthorizer, stmt)
+	measurementsFieldKeys, err := e.TSDBStore.FieldKeys(ctx, ctx.ExecutionOptions.Authorizer, stmt)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed computing field key cardinality for %q: %w", stmt.String(), err)
@@ -1502,7 +1502,7 @@ type TSDBStore interface {
 	MeasurementNames(ctx context.Context, auth query.FineAuthorizer, database string, retentionPolicy string, cond influxql.Expr) ([][]byte, error)
 	TagKeys(ctx context.Context, auth query.FineAuthorizer, shardIDs []uint64, cond influxql.Expr) ([]tsdb.TagKeys, error)
 	TagValues(ctx context.Context, auth query.FineAuthorizer, shardIDs []uint64, cond influxql.Expr) ([]tsdb.TagValues, error)
-	FieldKeys(ctx context.Context, auth query.CoarseAuthorizer, stmt *influxql.ShowFieldKeyCardinalityStatement) (map[string][]string, error)
+	FieldKeys(ctx context.Context, auth query.FineAuthorizer, stmt *influxql.ShowFieldKeyCardinalityStatement) (map[string][]string, error)
 
 	SeriesCardinality(ctx context.Context, database string) (int64, error)
 	MeasurementsCardinality(ctx context.Context, database string) (int64, error)
