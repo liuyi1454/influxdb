@@ -1644,9 +1644,12 @@ func (s *Store) WriteToShard(writeCtx WriteContext, shardID uint64, points []mod
 func (s *Store) FieldKeys(ctx context.Context, auth query.FineAuthorizer, stmt *influxql.ShowFieldKeyCardinalityStatement) (map[string][]string, error) {
 	authSources := make([]influxql.Source, 0, len(stmt.Sources))
 	for _, m := range stmt.Sources.Measurements() {
-		if auth.AuthorizeSeriesRead(m.Database, nil, nil) {
-			authSources = append(authSources, m)
+		if auth != nil {
+			if !auth.AuthorizeSeriesRead(m.Database, nil, nil) {
+				continue
+			}
 		}
+		authSources = append(authSources, m)
 	}
 	shards := Shards(s.filterShards(byMeasurements(influxql.Sources(authSources).Measurements())))
 	expandedSources, err := shards.ExpandSources(authSources)
