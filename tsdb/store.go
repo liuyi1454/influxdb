@@ -1679,14 +1679,14 @@ func (s *Store) FieldKeys(ctx context.Context, auth query.FineAuthorizer, stmt *
 			}
 		}
 	}
-	measurementFieldKeys := mapOfSetsToMapOfSlices(all)
+	measurementFieldKeys := MapOfSetsToMapOfSlices(all)
 	for m, _ := range measurementFieldKeys {
 		sort.Strings(measurementFieldKeys[m])
 	}
 	return measurementFieldKeys, nil
 }
 
-func mapOfSetsToMapOfSlices[K comparable, KV comparable, V any](m map[K]map[KV]V) map[K][]KV {
+func MapOfSetsToMapOfSlices[K comparable, KV comparable, V any](m map[K]map[KV]V) map[K][]KV {
 	retMap := make(map[K][]KV, len(m))
 
 	for k, vm := range m {
