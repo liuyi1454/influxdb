@@ -3198,7 +3198,9 @@ func RegisteredIndexes() []string {
 	for k := range newIndexFuncs {
 		a = append(a, k)
 	}
-	sort.Strings(a)
+	//sort.Strings(a)
+	//sort.Reverse(a)
+	sort.Sort(sort.Reverse(sort.StringSlice(a)))
 	return a
 }
 

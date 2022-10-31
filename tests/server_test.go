@@ -41,10 +41,12 @@ import (
 var benchServer Server
 
 func TestMain(m *testing.M) {
-	flag.BoolVar(&verboseServerLogs, "vv", false, "Turn on very verbose server logging.")
-	flag.BoolVar(&cleanupData, "clean", true, "Clean up test data on disk.")
+	// flag.BoolVar(&verboseServerLogs, "vv", false, "Turn on very verbose server logging.")
+	// flag.BoolVar(&cleanupData, "clean", true, "Clean up test data on disk.")
 	flag.Int64Var(&seed, "seed", 0, "Set specific seed controlling randomness.")
 	flag.Parse()
+
+	verboseServerLogs = true
 
 	// Set random seed if not explicitly set.
 	if seed == 0 {
@@ -53,6 +55,7 @@ func TestMain(m *testing.M) {
 	rand.Seed(seed)
 
 	var r int
+	//indexType = "tsi1"
 	for _, indexType = range tsdb.RegisteredIndexes() {
 		// Setup benchmark server
 		c := NewConfig()
@@ -132,13 +135,11 @@ func TestServer_Query_DropAndRecreateDatabase(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -165,13 +166,11 @@ func TestServer_Query_DropDatabaseIsolated(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -195,12 +194,10 @@ func TestServer_Query_DeleteSeries(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for i, query := range test.queries {
-		if i == 0 {
-			if err := test.init(s); err != nil {
-				t.Fatalf("test init failed: %s", err)
-			}
-		}
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		if query.skip {
 			t.Logf("SKIP:: %s", query.name)
 			continue
@@ -224,13 +221,11 @@ func TestServer_Query_DeleteSeries_TagFilter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -254,13 +249,11 @@ func TestServer_Query_DropAndRecreateSeries(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -275,13 +268,11 @@ func TestServer_Query_DropAndRecreateSeries(t *testing.T) {
 	// Re-write data and test again.
 	retest := tests.load(t, "drop_and_recreate_series_retest")
 
-	for i, query := range retest.queries {
+	if err := retest.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range retest.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := retest.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -305,13 +296,11 @@ func TestServer_Query_DropSeriesFromRegex(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -1783,13 +1772,11 @@ func TestServer_Query_SelectTwoPoints(t *testing.T) {
 		},
 	)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -1821,13 +1808,11 @@ func TestServer_Query_SelectTwoNegativePoints(t *testing.T) {
 		exp:     fmt.Sprintf(`{"results":[{"statement_id":0,"series":[{"name":"cpu","columns":["time","value"],"values":[["%s",-100],["%s",-200]]}]}]}`, now.Format(time.RFC3339Nano), now.Add(1).Format(time.RFC3339Nano)),
 	})
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -1867,13 +1852,11 @@ func TestServer_Query_SelectRelativeTime(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -1910,13 +1893,11 @@ func TestServer_Query_SelectRawDerivative(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -1957,13 +1938,11 @@ cpu value=20 1278010024000000000
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -2109,13 +2088,11 @@ cpu0,host=server02 ticks=101,total=100 1278010023000000000
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -2344,13 +2321,11 @@ cpu value=20 1278010021000000000
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -2431,13 +2406,11 @@ cpu value=25 1278010023000000000
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -2566,13 +2539,11 @@ cpu value=20 1278010021000000000
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -2655,13 +2626,11 @@ cpu value=35 1278010025000000000
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -2792,13 +2761,11 @@ cpu value=35 1278010025000000000
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -2879,13 +2846,11 @@ cpu value=25 1278010023000000000
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3014,13 +2979,11 @@ cpu value=20 1278010021000000000
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3057,13 +3020,11 @@ events signup=t 3838400000
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3100,13 +3061,11 @@ test,t=b y=3i 3000000000
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3143,13 +3102,11 @@ func TestServer_Query_MathWithFill(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3206,13 +3163,11 @@ func TestServer_Query_MergeMany(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3264,13 +3219,11 @@ func TestServer_Query_SLimitAndSOffset(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3340,13 +3293,11 @@ func TestServer_Query_Regex(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3381,13 +3332,11 @@ func TestServer_Query_Aggregates_Int(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3422,13 +3371,11 @@ func TestServer_Query_Aggregates_IntMax(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3569,13 +3516,11 @@ func TestServer_Query_Aggregates_IntMany(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3664,13 +3609,11 @@ func TestServer_Query_Aggregates_IntMany_GroupBy(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3711,13 +3654,11 @@ func TestServer_Query_Aggregates_IntMany_OrderByDesc(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3779,13 +3720,11 @@ func TestServer_Query_Aggregates_IntOverlap(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3819,13 +3758,11 @@ func TestServer_Query_Aggregates_FloatSingle(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -3960,13 +3897,11 @@ func TestServer_Query_Aggregates_FloatMany(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -4027,13 +3962,11 @@ func TestServer_Query_Aggregates_FloatOverlap(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -4087,13 +4020,11 @@ func TestServer_Query_Aggregates_GroupByOffset(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -4141,13 +4072,11 @@ func TestServer_Query_Aggregates_Load(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -4182,13 +4111,11 @@ func TestServer_Query_Aggregates_CPU(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -4260,13 +4187,11 @@ func TestServer_Query_Aggregates_String(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -4326,13 +4251,11 @@ func TestServer_Query_Aggregates_Math(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -4638,13 +4561,11 @@ func TestServer_Query_AggregateSelectors(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -4693,13 +4614,11 @@ func TestServer_Query_ExactTimeRange(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -4772,13 +4691,11 @@ func TestServer_Query_Selectors(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -5026,13 +4943,11 @@ func TestServer_Query_TopBottomInt(t *testing.T) {
 
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP: %s", query.name)
 			}
@@ -5094,13 +5009,11 @@ func TestServer_Query_TopBottomWriteTags(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP: %s", query.name)
 			}
@@ -5158,13 +5071,11 @@ func TestServer_Query_Aggregates_IdenticalTime(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -5242,13 +5153,11 @@ func TestServer_Query_GroupByTimeCutoffs(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -5318,13 +5227,11 @@ func TestServer_Query_MapType(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -5551,13 +5458,12 @@ func TestServer_Query_SubqueryWithGroupBy(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -6000,13 +5906,11 @@ func TestServer_Query_WildcardExpansion(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -6072,13 +5976,11 @@ func TestServer_Query_AcrossShardsAndFields(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -6140,13 +6042,12 @@ func TestServer_Query_OrderedAcrossShards(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -6359,13 +6260,12 @@ func TestServer_Query_Where_Fields(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -6542,13 +6442,12 @@ func TestServer_Query_With_EmptyTags(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -6657,13 +6556,12 @@ func TestServer_Query_LimitAndOffset(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -6760,13 +6658,12 @@ func TestServer_Query_Fill(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -6816,13 +6713,12 @@ func TestServer_Query_ImplicitFill(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -6912,13 +6808,12 @@ func TestServer_Query_TimeZone(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -6967,13 +6862,12 @@ func TestServer_Query_MaxRowLimit(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -7090,14 +6984,13 @@ func TestServer_Query_DropAndRecreateMeasurement(t *testing.T) {
 		},
 	}...)
 
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
 	// Test that re-inserting the measurement works fine.
-	for i, query := range test.queries {
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -7129,13 +7022,12 @@ func TestServer_Query_DropAndRecreateMeasurement(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -7199,13 +7091,12 @@ func TestServer_Query_ShowQueries_Future(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -7387,13 +7278,12 @@ func TestServer_Query_ShowSeriesCardinalityEstimation(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -7541,13 +7431,12 @@ func TestServer_Query_ShowSeriesExactCardinality(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -7583,13 +7472,12 @@ func TestServer_Query_ShowStats(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -7867,12 +7755,11 @@ func TestServer_Query_ShowMeasurements(t *testing.T) {
 		}...)
 	}
 
-	for i, query := range test.queries {
-		if i == 0 {
-			if err := test.init(s); err != nil {
-				t.Fatalf("test init failed: %s", err)
-			}
-		}
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+
+	for _, query := range test.queries {
 		if query.skip {
 			t.Logf("SKIP:: %s", query.name)
 			continue
@@ -7921,13 +7808,11 @@ func TestServer_Query_ShowMeasurementCardinalityEstimation(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -8057,13 +7942,11 @@ func TestServer_Query_ShowMeasurementExactCardinality(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -8633,13 +8516,11 @@ func TestServer_Query_ShowTagKeyCardinality(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -8697,13 +8578,11 @@ func TestServer_Query_ShowFieldKeys(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -8779,13 +8658,11 @@ func TestServer_Query_ShowFieldKeyCardinality(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -8808,13 +8685,8 @@ func TestServer_ContinuousQuery(t *testing.T) {
 	}
 
 	runTest := func(test *Test, t *testing.T) {
-		for i, query := range test.queries {
+		for _, query := range test.queries {
 			t.Run(query.name, func(t *testing.T) {
-				if i == 0 {
-					if err := test.init(s); err != nil {
-						t.Fatalf("test init failed: %s", err)
-					}
-				}
 				if query.skip {
 					t.Skipf("SKIP:: %s", query.name)
 				}
@@ -8882,6 +8754,9 @@ func TestServer_ContinuousQuery(t *testing.T) {
 			exp:     `{"results":[{"statement_id":0,"series":[{"name":"db0","columns":["name","query"],"values":[["cq1","CREATE CONTINUOUS QUERY cq1 ON db0 BEGIN SELECT count(value) INTO db0.rp1.:MEASUREMENT FROM db0.rp0./[cg]pu/ GROUP BY time(5s) END"],["cq2","CREATE CONTINUOUS QUERY cq2 ON db0 BEGIN SELECT count(value) INTO db0.rp2.:MEASUREMENT FROM db0.rp0./[cg]pu/ GROUP BY time(5s), * END"]]}]}]}`,
 		},
 	}...)
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
 
 	// Run first test to create CQs.
 	runTest(&test, t)
@@ -8905,6 +8780,9 @@ func TestServer_ContinuousQuery(t *testing.T) {
 			params:  url.Values{"db": []string{"db0"}},
 		},
 	}...)
+	if err := test2.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
 
 	// Run second test to check CQ results.
 	runTest(&test2, t)
@@ -8938,13 +8816,11 @@ func TestServer_ContinuousQuery_Deadlock(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -9013,13 +8889,11 @@ func TestServer_Query_EvilIdentifiers(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}
@@ -9092,12 +8966,10 @@ func TestServer_Query_OrderByTime(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
-		if i == 0 {
-			if err := test.init(s); err != nil {
-				t.Fatalf("test init failed: %s", err)
-			}
-		}
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		if query.skip {
 			t.Logf("SKIP:: %s", query.name)
 			continue
@@ -9143,12 +9015,10 @@ func TestServer_Query_FieldWithMultiplePeriods(t *testing.T) {
 		},
 	}...)
 
-	for i, query := range test.queries {
-		if i == 0 {
-			if err := test.init(s); err != nil {
-				t.Fatalf("test init failed: %s", err)
-			}
-		}
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		if query.skip {
 			t.Logf("SKIP:: %s", query.name)
 			continue
@@ -9194,12 +9064,10 @@ func TestServer_Query_FieldWithMultiplePeriodsMeasurementPrefixMatch(t *testing.
 		},
 	}...)
 
-	for i, query := range test.queries {
-		if i == 0 {
-			if err := test.init(s); err != nil {
-				t.Fatalf("test init failed: %s", err)
-			}
-		}
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		if query.skip {
 			t.Logf("SKIP:: %s", query.name)
 			continue
@@ -9999,13 +9867,11 @@ func TestServer_Prometheus_Write(t *testing.T) {
 		t.Fatalf("unexpected status: %d. Body: %s", resp.StatusCode, MustReadAll(resp.Body))
 	}
 
-	for i, query := range test.queries {
+	if err := test.init(s); err != nil {
+		t.Fatalf("test init failed: %s", err)
+	}
+	for _, query := range test.queries {
 		t.Run(query.name, func(t *testing.T) {
-			if i == 0 {
-				if err := test.init(s); err != nil {
-					t.Fatalf("test init failed: %s", err)
-				}
-			}
 			if query.skip {
 				t.Skipf("SKIP:: %s", query.name)
 			}

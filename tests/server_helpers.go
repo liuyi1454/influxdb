@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	//"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -67,6 +68,7 @@ func NewServer(c *Config) Server {
 		Config: c,
 	}
 	s.client.URLFn = s.URL
+
 	return &s
 }
 
@@ -77,6 +79,7 @@ func OpenServer(c *Config) Server {
 	if err := s.Open(); err != nil {
 		panic(err.Error())
 	}
+
 	return s
 }
 
@@ -145,11 +148,11 @@ func (s *LocalServer) Close() {
 		panic(err.Error())
 	}
 
-	if cleanupData {
-		if err := os.RemoveAll(s.Config.rootPath); err != nil {
-			panic(err.Error())
-		}
-	}
+	//// if cleanupData {
+	//// 	if err := os.RemoveAll(s.Config.rootPath); err != nil {
+	//// 		panic(err.Error())
+	//// 	}
+	//// }
 
 	// Nil the server so our deadlock detector goroutine can determine if we completed writes
 	// without timing out
@@ -355,6 +358,7 @@ func (s *client) Write(db, rp, body string, params url.Values) (results string, 
 	} else if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
 		return "", WriteError{statusCode: resp.StatusCode, body: string(MustReadAll(resp.Body))}
 	}
+	time.Sleep(time.Duration(5)) // sleep 5 seconds
 	return string(MustReadAll(resp.Body)), nil
 }
 
@@ -381,10 +385,12 @@ func NewConfig() *Config {
 		panic(err)
 	}
 
+	fmt.Println("ROOT PATH:", root, ",", indexType)
+
 	c := &Config{rootPath: root, Config: run.NewConfig()}
 	c.BindAddress = "127.0.0.1:0"
 	c.ReportingDisabled = true
-	c.Coordinator.WriteTimeout = toml.Duration(30 * time.Second)
+	c.Coordinator.WriteTimeout = toml.Duration(60 * time.Second)
 
 	c.Meta.Dir = filepath.Join(c.rootPath, "meta")
 	c.Meta.LoggingEnabled = verboseServerLogs
