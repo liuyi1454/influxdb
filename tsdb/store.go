@@ -1680,9 +1680,6 @@ func (s *Store) FieldKeys(ctx context.Context, auth query.FineAuthorizer, stmt *
 		}
 	}
 	measurementFieldKeys := MapOfSetsToMapOfSlices(all)
-	for m, _ := range measurementFieldKeys {
-		sort.Strings(measurementFieldKeys[m])
-	}
 	return measurementFieldKeys, nil
 }
 
