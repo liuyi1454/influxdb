@@ -60,9 +60,9 @@ func rewriteShowFieldKeyCardinalityStatement(stmt *influxql.ShowFieldKeyCardinal
 		return nil, errors.New("SHOW FIELD KEY CARDINALITY doesn't support time in WHERE clause")
 	}
 
-	sources := rewriteSources2(stmt.Sources, stmt.Database)
+	stmt.Sources = rewriteSources2(stmt.Sources, stmt.Database)
+
 	if (stmt.Condition == nil) && (stmt.Limit == 0) && (stmt.Offset == 0) && (stmt.Dimensions == nil) {
-		stmt.Sources = sources
 		return stmt, nil
 	}
 
@@ -81,7 +81,7 @@ func rewriteShowFieldKeyCardinalityStatement(stmt *influxql.ShowFieldKeyCardinal
 				Alias: "count",
 			},
 		},
-		Sources:    sources,
+		Sources:    stmt.Sources,
 		Condition:  stmt.Condition,
 		Dimensions: stmt.Dimensions,
 		Offset:     stmt.Offset,
